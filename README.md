@@ -15,12 +15,15 @@ Interactive visualization tool for exploring the Inscribed Rectangle Problem - a
 The inscribed rectangle problem is a fundamental question in geometry, asking whether every Jordan curve contains the vertices of a rectangle [1]. While the inscribed square problem remains open for general curves [2], recent work by Cole and Shiu has made significant progress on inscribed rectangles using geometric foliation theory [3]. This visualization tool helps explore possible rectangle configurations, inspired by Haraguchi's topological approach [4] and recent breakthroughs in the field [5].
 
 ## Requirements
-- Python 3.x
-- NumPy
-- Matplotlib
+```
+python>=3.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+```
 
 ## Usage
 ```python
+pip install -r requirements.txt
 python main.py
 ```
 
