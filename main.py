@@ -31,9 +31,9 @@ class DraggablePoints:
         # Create draggable points
         self.points = [
             Circle(points[0], 0.02, fc='yellow', zorder=3),
-            Circle(points[1], 0.02, fc='yellow', zorder=3),
-            Circle(points[2], 0.02, fc='magenta', zorder=3),
-            Circle(points[3], 0.02, fc='magenta', zorder=3)
+            Circle(points[1], 0.02, fc='magenta', zorder=3),
+            Circle(points[2], 0.02, fc='sandybrown', zorder=3),
+            Circle(points[3], 0.02, fc='palevioletred', zorder=3)
         ]
         
         # Create connection lines
@@ -43,22 +43,28 @@ class DraggablePoints:
                   c='cyan', zorder=2),
             Line2D([points[2][0], points[3][0]], 
                   [points[2][1], points[3][1]], 
-                  c='red', zorder=2)
+                  c='cyan', zorder=2)
         ]
         
         # Create midpoints
         self.midpoints = [
-            Circle(self.get_midpoint(points[0], points[1]), 0.015, fc='red', zorder=3),
-            Circle(self.get_midpoint(points[2], points[3]), 0.015, fc='red', zorder=3)
+            Circle(self.get_midpoint(points[0], points[1]), 0.015, fc='teal', zorder=3),
+            Circle(self.get_midpoint(points[2], points[3]), 0.015, fc='teal', zorder=3)
         ]
         
-        # Create intersection point (initially hidden)
-        self.intersection_point = Circle((0, 0), 0.01, fc='lime', zorder=4, visible=False)
+        # Create intersection point and rectangle (initially hidden)
+        self.intersection_point = Circle((0, 0), 0.01, fc='springgreen', zorder=4, visible=False)
+        self.rectangle_lines = [
+            Line2D([], [], c='gold', linestyle='--', alpha=0.6, zorder=1),
+            Line2D([], [], c='gold', linestyle='--', alpha=0.6, zorder=1),
+            Line2D([], [], c='gold', linestyle='--', alpha=0.6, zorder=1),
+            Line2D([], [], c='gold', linestyle='--', alpha=0.6, zorder=1)
+        ]
         
         # Add elements to plot
         for point in self.points + self.midpoints:
             self.ax.add_patch(point)
-        for line in self.connection_lines:
+        for line in self.connection_lines + self.rectangle_lines:
             self.ax.add_line(line)
         self.ax.add_patch(self.intersection_point)
         
@@ -93,26 +99,6 @@ class DraggablePoints:
         if isinstance(p2, Circle):
             p2 = p2.center
         return ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
-
-    def get_intersection(self):
-        """Calculate intersection point of the two lines and check if valid"""
-        x1, y1 = self.points[0].center
-        x2, y2 = self.points[1].center
-        x3, y3 = self.points[2].center
-        x4, y4 = self.points[3].center
-        
-        denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        if abs(denominator) < 1e-10:
-            return None
-            
-        t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator
-        u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
-        
-        if 0 <= t <= 1 and 0 <= u <= 1:
-            intersection_x = x1 + t * (x2 - x1)
-            intersection_y = y1 + t * (y2 - y1)
-            return (intersection_x, intersection_y)
-        return None
 
     def get_loop_coordinate(self, point):
         """Convert point position to loop coordinate (0.0 to 1.0)"""
@@ -163,18 +149,16 @@ class DraggablePoints:
         # Check if midpoints are close enough to be considered intersecting
         dist = np.sqrt((m1[0] - m2[0])**2 + (m1[1] - m2[1])**2)
         if dist < 0.02:  # Threshold for intersection
-            # Calculate rectangle corners
-            p1, p2 = self.points[0].center, self.points[1].center
-            p3, p4 = self.points[2].center, self.points[3].center
-            
-            # Update rectangle lines
-            self.rectangle_lines[0].set_data([p1[0], p2[0]], [p1[1], p2[1]])
-            self.rectangle_lines[1].set_data([p2[0], p4[0]], [p2[1], p4[1]])
-            self.rectangle_lines[2].set_data([p4[0], p3[0]], [p4[1], p3[1]])
-            self.rectangle_lines[3].set_data([p3[0], p1[0]], [p3[1], p1[1]])
-            
+            # Draw connecting lines between points with wrap-around
+            points = [self.points[0], self.points[2], self.points[3], self.points[1]]
+            for i in range(4):
+                self.rectangle_lines[i].set_data(
+                    [points[i].center[0], points[(i+1)%4].center[0]],
+                    [points[i].center[1], points[(i+1)%4].center[1]]
+                )
             for line in self.rectangle_lines:
                 line.set_visible(True)
+                line.set_linestyle('--')
         else:
             for line in self.rectangle_lines:
                 line.set_visible(False)
